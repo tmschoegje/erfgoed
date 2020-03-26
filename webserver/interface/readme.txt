@@ -1,0 +1,1 @@
+based on the "google custom search" code I wrote for the search behaviour logging extension
