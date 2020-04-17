@@ -16,7 +16,7 @@ from time import sleep
 es = Elasticsearch()
 ps = PorterStemmer() 
 ss = SnowballStemmer("dutch", ignore_stopwords=True)
-indexName='9-3-erfgoed'
+indexName='30-3-erfgoed'
 themeid=''
 
 #Entrypoint when called properly - call the json version instead of trying to print() results
@@ -74,28 +74,48 @@ def query(q, start=0):
 	size = 10
 	
 	#stemming query terms
-	newq = stemm(q)
-		
+	#newq = q#stemm(q)
 	print(q)
+
+	newq = ""
+	for term in q.split(" "):
+		newq += " "
+		print(term)
+		if term == "AND" or term == "OR":
+			newq += term
+		else:
+			if len(term) > 2:
+				newq += "*" + term.lower() + "*"
+			else:
+				newq += term.lower()
 	print(newq)
 	
 	#if there's no query, try to query all
 	if len(q) == 0:
 		newq = "de het een"	
+		
+
+	#newq = "(agniet)"#"*" + stemm(q) + "*"
 	
 	
-	s = Search(using=es, index=indexName)
+	s = Search(using=es, index=indexName).highlight('title', 'fulltext', fragment_size=100)	
+	
 	
 	#Theme is disabled
 #	if(len(themeid) == 1):
 		#print('Going to filter with theme ' + str(themeid))
 #		s = s.filter('term', theme=int(themeid))
-	s = s.query("multi_match", query = newq, fields = ["title", "fulltext"])
-		
+	s = s.query("query_string", query = newq, fields = ["title", "fulltext"])#fuzziness = "AUTO"
+	
 	s2 = s[int(start):int(start)+size]
+	
 	response = s2.execute()
 	print('test here')
-	print(response)
+	#for hit in response:
+	#	print(hit)
+	#print(len(response))
+	#print(response.hits.total.value)
+	#print(response)
 	
 #	for hit in response:
 #		print(hit.theme)
@@ -144,6 +164,12 @@ def firstSentence(fulltext, q):
 				
 	return "No preview available."
 
+def preview(hit, field, q):
+	#First try the elastic highlighter. Then try our own. I'm not sure if we match any additional cases
+	if (field in hit.meta.highlight):
+		return str(hit.meta.highlight[field][0]).replace("<em>", "<b>").replace("</em>","</b>")
+	else:
+		return firstSentence(hit['fulltext'], q)
 
 #Alternative to the JSON function. This one is for testing stuff on the webserver
 def stringResultsURL(response, q):
@@ -172,40 +198,19 @@ def jsonResultsURL(response, q):
 		'query': q,#"> " + q + "\n"
 		'hits': [],
 		}
-	#Test if there are results
-	#if(response == 'No query'):
-	#print(response)
 	if len(response) == 0:
 		res['numresults'] = '0 results\n\n'
 	else:
-#		print()
-#		response_dict = json.loads(response.content)
-#		for key, v in response_dict:
-#			print(key)
-		print('ghello')
 		for hit in response:
-#			print()
-#			print(test)
-			#print('NEWRESULT')
-			#print()
-			#breakpoint()
-			#print(hit.meta['id'])
-#			res += hit['title'] + '\n'
-#			res += hit['url'] + '\n'
+#			print(hit)
+#			for keys in hit.meta:
+#				print(keys)
 			res['hits'].append({
 				'title':str(hit['title'][0]),
-				'preview': str(firstSentence(hit['fulltext'], q))#strip_tags(
-				#'docid':hit.meta['id']
-#				'domain':hit['domain'],
-#				'theme':hit['theme']
+				'preview': preview(hit, 'fulltext', q)
 			})
-		#print(response)
 		res['numresults'] = response.hits.total.value#len(response)
 			
-#		print(hit['title'])
-#		print(hit['url'])
-		#strip the html content
-#		print(firstSentence(strip_tags(hit['html']), q))
 	return res
 
 def printResultsURL(response, q):

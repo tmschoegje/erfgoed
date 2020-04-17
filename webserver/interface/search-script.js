@@ -57,7 +57,7 @@ function Search(term, engine, direction)
 	else if(engine == "poc"){
 		console.log("Before the PoC call")
 		_engine = "poc"
-		var url = "http://localhost:8000/queryme/search/" + "?query=" + escape(term) + "&start=" + startIndex
+		var url = "http://localhost:8000/queryme/search/" + "?query=" + escape(term) + "&start=" + (startIndex - 1)
 	}
 	//deprecated: sort by relevancy using oris
 	else{
@@ -228,7 +228,7 @@ function SearchCompleted(response)
 			return;
 		}
 		
-		$("#searchResult").html("Around " + results.numresults + " results found for <b>" + _keywords.join(" ") + "</b><br><br>");
+		$("#searchResult").html(results.numresults + " results found for <b>" + _keywords.join(" ") + "</b><br><br>");
 		
 		//$("#output").html(html)
 		
@@ -275,13 +275,17 @@ function SearchCompleted(response)
 		for (var i = 0; i < results.numresults && i < _resultsPerPage; i++){
 			var item = results.hits[i];
 			console.log(item)
+			//if(item == undefined)
+			//	alert(i)
 			
 			// HACKY: sometimes there's an 'undefined' result (e.g. for 'wistudata.nl') - what causes this? for now we skip
 			if(item !== undefined){
 				
 				var title = item.title;
         
-				html += "<p><a class='searchLink' href='" + item.url + "' id='" + item.docid + "'> " + title + "</a>&nbsp;&nbsp;&nbsp;<a class='mlt'></a><br>";
+				//temp fix
+				itemloc = 'C:/Users/tmsch/Desktop/werk/erfgoed/erfgoed docs/' + title
+				html += "<p><a class='searchLink' href='" + itemloc + "' id='" + item.docid + "'> " + title + "</a>&nbsp;&nbsp;&nbsp;<a class='mlt'></a><br>";
 //			html += "<p><a class='searchLink' href='" + item.url + "' id='" + item.docid + "'> " + title + "</a>&nbsp;&nbsp;&nbsp;<a class='mlt'>More like this!</a><br>";
 			//<i>" + item.url + "</i><br>
 			//if we recognise pdf/word, add a date

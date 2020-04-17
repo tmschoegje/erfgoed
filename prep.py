@@ -15,8 +15,8 @@ import json
 from time import sleep
 
 #Name of the Elastic index
-indexName = '9-3-erfgoed'
-indexFile = 'ERFGOED.json'
+indexName = '30-3-erfgoed'
+indexFile = '30-3-erfgoed.json'
 
 print(Path.cwd())
 
@@ -25,8 +25,9 @@ def gendata():
 		#demo example: there is only one line..
 		contents = f.read()	
 		
-		#deal with non UTF-8 chars
-		contents = unicode(contents, errors='ignore')
+		#deal with non UTF-8 chars (not necessary anymore)
+			#contents = json.dumps(contents)#unicode(contents, errors='ignore')
+		
 		jsline = json.loads(contents)
 		for doc in jsline:
 			fulltext = ""
